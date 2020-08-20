@@ -1,5 +1,7 @@
 /* global chrome */
 
+var modal = document.getElementById("myModal");
+
 window.addEventListener("load", function () {
     var observeDOM = (function () {
         var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
@@ -60,8 +62,29 @@ window.addEventListener("load", function () {
                     teamString = teamString + ' Vs ' + teamsOgInterest[k].innerText;
                 }
             }
-            let msg = teamString + "\n" + value;
-            alert(msg);
+            //let msg = teamString + "\n" + value;
+            //alert(msg);
+            let myModeldiv = document.getElementById('myModal');
+            if(myModeldiv){
+                document.getElementById('myModalteam').innerText=teamString;
+                document.getElementById('myModalvalue').innerText=value;
+                myModeldiv.style.display = "block";
+            }else{
+                myModeldiv = document.createElement('div');
+                myModeldiv.setAttribute('id', "myModal");
+                myModeldiv.setAttribute('class', "modal");   
+                myModeldiv.innerHTML = '<div class="modal-content">'
+                        +'<span id="myModalClose" class="close">&times;</span>'
+                            +'<p id="myModalteam">'+teamString+'</p>'
+                            +'<p id="myModalvalue">'+value+'</p>'
+                        +'</div>'
+                myModeldiv.style.display = "block";
+                document.body.appendChild(myModeldiv);
+            }
+            document.getElementById('myModalClose').onclick = function(){
+                myModeldiv.style.display = "none";
+            }
+
         }
     }
 });

@@ -21,6 +21,9 @@
       "js": [
         "app/scripts/contentscript.js"
       ],
+      "css": [
+        "app/scripts/style.css"
+      ],
       "run_at": "document_start"
     }
   ],
