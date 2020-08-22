@@ -4,7 +4,7 @@
 }
 .modal {
     display: none; /* Hidden by default */
-    position: absolute; /* Stay in place */
+    position: fixed; /* Stay in place */
     z-index: 1; /* Sit on top */
     left: 50%;
     top: 40%;
@@ -27,7 +27,7 @@
   
   /* The Close Button */
   .close {
-    color: #aaa;
+    color: red;
     float: right;
     font-size: 28px;
     font-weight: bold;
@@ -35,7 +35,7 @@
   
   .close:hover,
   .close:focus {
-    color: black;
+    color: blue;
     text-decoration: none;
     cursor: pointer;
   }

@@ -348,7 +348,7 @@ window.addEventListener("load", function () {
                     </div>
             `;
 
-            //}else if(marketText === 'Correct Score'){
+            }else if(marketText === 'Correct Score'){
 
 
             }else{
@@ -359,10 +359,8 @@ window.addEventListener("load", function () {
                 mySecondModal.parentNode.removeChild(mySecondModal);
             }
 
+         //   console.log(document.querySelector('body > div:nth-child(1) > div > div.wc-PageView > div.wc-PageView_Main > div > div.wcl-CommonElementStyle_PrematchCenter > div.cm-CouponModule > div > div:nth-child(4) > div.gl-MarketGroup_Wrapper > div > div > div:nth-child(3)').wrapper.stem);
 
-          //  let test = document.querySelector('body > div:nth-child(1) > div > div.wc-PageView > div.wc-PageView_Main > div > div.wcl-CommonElementStyle_PrematchCenter > div.cm-CouponModule > div > div:nth-child(4) > div.gl-MarketGroup_Wrapper > div > div > div:nth-child(3)');
-         //console.log(test); //.wrapper.stem);
-         //   console.log(test.wrapper.stem);
 
             if(html){
                 mySecondModal = document.createElement('div');
