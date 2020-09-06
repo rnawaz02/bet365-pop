@@ -1,34 +1,48 @@
 {
   "manifest_version": 2,
-  "name": "Bet365 Pop",
-  "description": "Bet365 Pop for bet365.com",
+  "name": "aliexpress-data",
+  "description": "aliexpress-data for aliexpress.com",
   "version": "0.1.0",
   "browser_action": {
-    "default_title": "Bet365 Pop"
+    "default_popup": "index.html", 
+    "default_title": "Aliexpress Data Scrapper"
   },
   "icons": {
-    "16": "bet365-logo16.png",
-    "48": "bet365-logo48.png",
-    "128": "bet365-logo128.png"
+    "16": "logo-16.png",
+    "48": "logo-48.png",
+    "128": "logo-128.png"
   },
   "author": "Rab Nawaz",
+
+  "background": {
+    "scripts": [
+      "app/scripts/background/background.js"
+    ],
+    "persistent": false
+  },
   "content_scripts": [
     {
       "matches": [
-        "*://*.bet365.com/*"
+        "*://*.aliexpress.com/*"
       ],
       "all_frames": true,
-      "js": [
-        "app/scripts/contentscript.js"
-      ],
       "css": [
-        "app/scripts/style.css"
+        "app/scripts/content/css/style.css"
+      ],
+      "js": [
+        "app/scripts/content/contentscript.js"
       ],
       "run_at": "document_start"
     }
   ],
+  "externally_connectable": {
+    "matches": [
+      "*://*.a38e8a3c.ngrok.io/*"
+    ]
+  },
   "permissions": [
+    "tabs",
     "storage",
-    "*://*.bet365.com/*"
+    "*://*.aliexpress.com/*"
   ]
 }
