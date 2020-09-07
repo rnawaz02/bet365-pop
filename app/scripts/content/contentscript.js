@@ -186,6 +186,7 @@ function aliOrderParser() {
 
     let ordersOnThePage = document.getElementById('buyer-ordertable').getElementsByClassName('order-item-wraper');
     for (let i = 0; i < ordersOnThePage.length; i++) {
+        console.log(ordersOnThePage[i]);
         let orderInfo = ordersOnThePage[i].getElementsByClassName('order-info');
         let storeInfo = ordersOnThePage[i].getElementsByClassName('store-info');
         let orderAmount = ordersOnThePage[i].getElementsByClassName('order-amount');
@@ -206,18 +207,24 @@ function aliOrderParser() {
                 }
             }
         }
-        let orderItem = {
-            orderNumber: orderInfo[0].getElementsByClassName('first-row')[0].getElementsByClassName('info-body')[0].innerHTML.trim(),
-            orderTime: orderInfo[0].getElementsByClassName('second-row')[0].getElementsByClassName('info-body')[0].innerHTML.trim(),
-            storeName: storeInfo[0].getElementsByClassName('first-row')[0].getElementsByClassName('info-body')[0].innerHTML.trim(),
-            orderAmount: orderAmount[0].getElementsByClassName('amount-num')[0].innerHTML.trim(),
-            itemAmount: orderamountandcount[0].innerHTML.trim(),
-            quantity: orderamountandcount[1].innerHTML.trim(),
-            properties: properties,
-            orderStatus: orderBody[0].getElementsByClassName('order-status')[0].getElementsByClassName('f-left')[0].innerHTML.trim(),
-            orderAction: orderBody[0].getElementsByClassName('order-action')[0].getElementsByTagName('button')[1].innerHTML.trim()
-        }
         let detailURL = orderInfo[0].getElementsByClassName('first-row')[0].getElementsByTagName("a")[0].href;
-        data.push({ [orderItem.orderNumber]: orderItem, status: "new", detailURL: detailURL });
+        let orderItem = {
+            orderNumber: orderInfo[0].getElementsByClassName('first-row')[0].getElementsByClassName('info-body')[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
+            orderTime: orderInfo[0].getElementsByClassName('second-row')[0].getElementsByClassName('info-body')[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
+            storeName: storeInfo[0].getElementsByClassName('first-row')[0].getElementsByClassName('info-body')[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
+            orderAmount: orderAmount[0].getElementsByClassName('amount-num')[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
+            itemAmount: orderamountandcount[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
+            quantity: orderamountandcount[1].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
+            properties: properties.replace(/(\r\n|\n|\r)/gm, ""),
+            orderStatus: orderBody[0].getElementsByClassName('order-status')[0].getElementsByClassName('f-left')[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
+            orderAction: orderBody[0].getElementsByClassName('order-action')[0].getElementsByTagName('button')[1].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
+            internationalShippingCompany: '',
+            trackingNumberRemarksDetails: '',
+            address: '',
+            status: "new",
+            detailURL: detailURL
+        }
+        console.log(orderItem);
+        data.push({ [orderItem.orderNumber]: orderItem });
     }
 }

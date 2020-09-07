@@ -58,6 +58,14 @@ window.addEventListener("load", function () {
         });
     });
 
+    document.getElementById('savebcbutton').addEventListener('click', function (event) {
+        chrome.runtime.sendMessage({ command: 'savebc-pop' }); /*, function (response) {
+            console.log(response);
+        });
+        */
+    });
+
+
     chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
         console.log(message)

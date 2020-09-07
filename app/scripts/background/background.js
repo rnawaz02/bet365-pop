@@ -1,13 +1,21 @@
 var state; // = false;
 var data;// = [];
 var crawling; // = false;
+var username = "test";
+var password = "Gt6bfN0rYXNq";
+
 
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+
     if (message.command === 'testbc-pop') {
         console.log('testbc-pop');
         console.log(state);
         console.log(crawling);
         console.log(data);
+        return false;
+    } else if (message.command === 'savebc-pop') {
+        console.log('savebc-pop');
+        postDatatoTheServer();
         return false;
     } else if (message.command === 'reset-pop') {
         console.log('reset-pop');
@@ -118,19 +126,19 @@ function postDatatoTheServer() {
 
     console.log('posting results to the server');
 
-    return fetch('http://localhost',
+    return fetch('http://localhost/ali/all.php',
         {
             method: 'POST', // *GET, POST, PUT, DELETE, etc.
             mode: 'cors', // no-cors, *cors, same-origin
             cache: 'no-cache', // *default, no-cache, reload, force-cache, only-if-cached
-            credentials: 'include', // include, *same-origin, omit
+            credentials: 'omit', // include, *same-origin, omit
             headers: {
                 'Content-Type': 'application/json'
             },
             redirect: 'follow', // manual, *follow, error
             referrer: 'no-referrer', // no-referrer, *client
             timeout: 5000,
-            body: JSON.stringify(data)
+            body: JSON.stringify({username: username, password: password, data:data})
         }).then(response => {
             console.log(response);
             return response.json();
