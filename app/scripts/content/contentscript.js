@@ -220,9 +220,9 @@ function aliOrderDetailParser() {
     let internationalShippingCompany = '';
     let trackingNumberRemarksDetails = ''
     let shippingBd = document.getElementsByClassName('shipping-bd');
-    if (shippingBd.length === 0) {
-        return false;
-    }
+    //if (shippingBd.length === 0) {
+    //    return false;
+    //}
     for (let i = 0; i < shippingBd.length; i++) {
         let logisticsName = shippingBd[i].getElementsByClassName('logistics-name')[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, "");
         let logisticsNum = shippingBd[i].getElementsByClassName('logistics-num')[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, "");
@@ -247,5 +247,6 @@ function aliOrderDetailParser() {
         address: userShippingList[1].getElementsByTagName('span')[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, "")
     }
     data = data;
+    console.log(data);
     return data;
 }

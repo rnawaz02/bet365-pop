@@ -7,42 +7,52 @@ var crawled = false;
 var username = "test";
 var password = "Gt6bfN0rYXNq";
 var lock;
+let page;
+let myitem;
+let itemsize;
+let orderNumber;
 function startDetailScrapping() {
     console.log('startDetailScrapping is called');
+    console.log('lock = ', lock);
     if (!lock) {
         chrome.storage.local.get(['crawlerData'], function (result) {
             lock = true;
-
             console.log(result);
 
+            page = result.crawlerData.currPage;
+            myitem = result.crawlerData.myitem;
+
+
             //updateCrawlMeta(currPage, totalPages, jobType)
-            let page;
-            let item;
-            let itemsize;
+            /*
             if (result.crawlerData.crawling) {
                 if (result.crawlerData.jobType === 1) {
                     page = 1;
-                    item = 0;
+                    myitem = 1;
                 } else {
-                    page = result.crawlerData.currPage
+                    page = result.crawlerData.currPage;
+                    myitem = 1;
                 }
             }
+            */
             chrome.storage.local.get(['data-' + page], function (result2) {
 
                 console.log(result2['data-' + page]);
                 let keyList = Object.keys(result2['data-' + page]);
                 itemsize = keyList.length;
+               
+
 
                 console.log(keyList);
                 console.log(itemsize);
-                console.log(result2['data-' + page][keyList[item]]);
+                console.log(result2['data-' + page][keyList[myitem-1]]);
 
-                let orderNumber = Object.keys(result2['data-' + page][keyList[item]]);
+                orderNumber = Object.keys(result2['data-' + page][keyList[myitem-1]])[0];
 
                 console.log(orderNumber);
 
-                console.log();
-                let dataCopy = result2['data-' + page][keyList[item]][orderNumber[0]];
+                console.log(myitem);
+                let dataCopy = result2['data-' + page][keyList[myitem-1]][orderNumber];
 
                 if (dataCopy.status === "new") {
                     //let tabURL = dataCopy.detailURL
@@ -52,71 +62,31 @@ function startDetailScrapping() {
                         console.log(tab.id);
                         workingTab = tab.id;
                         //data[currentOrderDetailIndex][key].tabid = tab.id;
-                        updateCrawlMeta(page, '', 2, item, itemsize, orderNumber[0], workingTab)
+                        console.log(myitem);
+
+                        //updateCrawlMeta(page, '', "2", myitem, itemsize, orderNumber, workingTab)
+                        result.crawlerData.itemsize = itemsize;
+                        result.crawlerData.workingTab = workingTab;
+                        chrome.storage.local.set({ 'crawlerData': result.crawlerData });
 
                     });
-                    /*
-                                    if (oldtab !== 0) {
-                                        chrome.tabs.remove(oldtab, function () {
-                                            console.log('tab is closed');
-                                            console.log(currentOrderDetailIndex - 1);
-                                            startDetailScrapping(currentOrderDetailIndex + 1);
-                                        });
-                                    }
-                                    */
                 } else {
-                    updateCrawlMeta(page, '', 2, item, itemsize, orderNumber[0], '')
+                    updateCrawlMeta(page, '', "2", myitem, itemsize, orderNumber, '')
                 }
 
             });
+            
             //updateCrawlMeta(page, '', 2, item, itemsize, orderNumber)
 
         });
     }
-    /*
-    let oldtab = 0;
-    currentOrderDetailIndex = index;
-    console.log('currentOrderDetailIndex -- ', currentOrderDetailIndex);
-    console.log('startDetailScrapping is called.');
-    if (!lock) {
-        lock = true;
-        if (data && data.length > currentOrderDetailIndex) {
-            let key = Object.keys(data[currentOrderDetailIndex]);
-            console.log(key);
-            if (currentOrderDetailIndex > 1) {
-                let oldKey = Object.keys(data[currentOrderDetailIndex - 1]);
-                oldtab = data[currentOrderDetailIndex - 1][oldKey].tabid;
-            }
-            console.log(data[currentOrderDetailIndex][key]);
-            console.log(data[currentOrderDetailIndex][key].status);
-            if (data[currentOrderDetailIndex][key].status === "new") {
-                let tabURL = data[currentOrderDetailIndex][key].detailURL
-                console.log(tabURL);
-                chrome.tabs.create({ url: tabURL }, function callBack(tab) {
-                    console.log(tab);
-                    console.log(tab.id);
-                    workingTab = tab.id;
-                    data[currentOrderDetailIndex][key].tabid = tab.id;
-                });
-
-                if (oldtab !== 0) {
-                    chrome.tabs.remove(oldtab, function () {
-                        console.log('tab is closed');
-                        console.log(currentOrderDetailIndex - 1);
-                        startDetailScrapping(currentOrderDetailIndex + 1);
-                    });
-                }
-            }
-        }
-    }
-    */
 }
 
 chrome.storage.local.get(['crawlerData'], function (result) {
     console.log(result);
     if (Object.keys(result).length === 0 && result.constructor === Object) {
         console.log('no result found initialize');
-        chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false } }, function () {
+        chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false, page: 1, myitem: 1 } }, function () {
             console.log("added default values to the storage")
         });
     } else {
@@ -129,7 +99,7 @@ chrome.storage.local.get(['crawlerData'], function (result) {
     }
 });
 
-function updateCrawlMeta(currPage, totalPages, jobType, item, itemsize, orderNumber, workingTab) {
+function updateCrawlMeta(currPage, totalPages, jobType, myitem, itemsize, orderNumber, workingTab) {
     //         updateCrawlMeta(page, '', 2, item, itemsize, orderNumber, tab.id)
 
     chrome.storage.local.get(['crawlerData'], function (result) {
@@ -137,10 +107,12 @@ function updateCrawlMeta(currPage, totalPages, jobType, item, itemsize, orderNum
         if (totalPages) result.crawlerData.totalPages = totalPages;
         if (jobType) result.crawlerData.jobType = jobType;
 
-        if (item) result.crawlerData.item = item;
+        if (myitem) result.crawlerData.myitem = myitem;
         if (itemsize) result.crawlerData.itemsize = itemsize;
         if (orderNumber) result.crawlerData.orderNumber = orderNumber;
         if (workingTab) { result.crawlerData.workingTab = workingTab } else { result.crawlerData.workingTab = '' };
+
+        console.log(result);
 
         chrome.storage.local.set({ 'crawlerData': result.crawlerData });
     });
@@ -171,7 +143,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         crawled = false;
         workingTab = '';
         currentOrderDetailIndex = 0;
-        chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false } });
+        chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false, page:1, jobType : 1} });
         sendResponse({ response: "success" });
     } else if (message.command === 'startScrapping-pop') {
         console.log('startScrapping-pop');
@@ -179,7 +151,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         chrome.storage.local.get(['crawlerData'], function (result) {
             console.log(result);
             if (Object.keys(result).length === 0 && result.constructor === Object) {
-                chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: true } });
+                chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: true, jobType:1, page: 1 } });
             } else {
                 if (!result.crawlerData.crawling) {
                     chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: true } }, function (result) {
@@ -269,8 +241,17 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             updateCrawlMeta(pages[0], pages[1], 1);
             chrome.storage.local.set({ ['data-' + pages[0]]: message.data }, function (result) {
                 sendResponse({ response: true });
-                if (pages[0] === pages[1]) {
-                    startDetailScrapping();
+                if (pages[0] === pages[1]) {            
+                    chrome.storage.local.get(['crawlerData'], function (last) {
+                        last.crawlerData.currPage = 1;
+                        last.crawlerData.myitem = 1;
+                        last.crawlerData.jobType = 2;
+                        chrome.storage.local.set({ 'crawlerData': last.crawlerData }, function(last2){
+                            //startDetailScrapping();
+                            setTimeout(startDetailScrapping, 3000);
+
+                        });
+                    });
                 }
             });
             return true;
@@ -287,63 +268,75 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         chrome.storage.local.get(['crawlerData'], function (result) {
             console.log(result);
 
-            chrome.storage.local.get(['data-' + result.crawlerData.currPage], function (result2) {
-                let dataCopy = result2[result.crawlerData.item][result.crawlerData.orderNumber];
+            if (result.crawlerData.workingTab) {
+                chrome.tabs.remove(result.crawlerData.workingTab, function () {
+                    console.log(result.crawlerData.workingTab, 'tab is closed');
+                });
+            }
+
+
+            chrome.storage.local.get(['data-' + page], function (result2) {
+
+                console.log(result2);
+
+                console.log(page);
+                console.log(myitem);
+                console.log(myitem-1);
+                console.log(result.crawlerData.myitem -1);
+                console.log(itemsize);
+                console.log(orderNumber);
+
+                console.log(result.crawlerData.myitem -1);
+                console.log(message.data.orderNo);
+             
+             
+                let dataCopy = result2['data-' + page][myitem - 1][message.data.orderNo];
                 console.log(dataCopy);
+
+              
+                //let dataCopy = result2[result.crawlerData.item][result.crawlerData.orderNumber];
+                //console.log(dataCopy);
                 dataCopy.internationalShippingCompany = message.data.internationalShippingCompany
                 dataCopy.trackingNumberRemarksDetails = message.data.trackingNumberRemarksDetails
                 dataCopy.address = message.data.address
                 dataCopy.status = "complete";
-                chrome.storage.local.set({ ['data-' + result.crawlerData.currPage] : result2}, function(result3){
+                chrome.storage.local.set({ ['data-' + page] : result2['data-' + page] }, function(result3){
                     console.log(result3);
+
+                    if(myitem < itemsize) {
+                        result.crawlerData.myitem = myitem + 1
+                        console.log(result);
+                        chrome.storage.local.set({['crawlerData'] : result.crawlerData}, function (result4) {
+                            console.log(result4);
+                            lock = false;
+                            setTimeout(startDetailScrapping, 3000);
+                        });
+                    }else if(myitem === itemsize && page < result.crawlerData.totalPages){
+                        result.crawlerData.myitem = 1
+                        result.crawlerData.currPage = page + 1
+                        chrome.storage.local.set({['crawlerData'] : result.crawlerData}, function (result4) {     
+                            console.log(result4);
+                            lock = false;
+                            setTimeout(startDetailScrapping, 3000);
+                        });
+                    }else{
+                        console.log('end of job');
+                        result.crawlerData.crawling = false
+                        chrome.storage.local.set({['crawlerData'] : result.crawlerData}, function (result4) {
+                            console.log(result4);
+                            postDatatoTheServer();
+                        });               
+                    }
                 })
             });
         });
-
-
-
-
-
-        // console.log(data);
-
-        /*
-        console.log(data[currentOrderDetailIndex][message.data.orderNo].tabid);
-        data[currentOrderDetailIndex][message.data.orderNo].internationalShippingCompany = message.data.internationalShippingCompany
-        data[currentOrderDetailIndex][message.data.orderNo].trackingNumberRemarksDetails = message.data.trackingNumberRemarksDetails
-        data[currentOrderDetailIndex][message.data.orderNo].address = message.data.address;
-        data[currentOrderDetailIndex][message.data.orderNo].status = "complete";
-*/
-        // console.log(data[currentOrderDetailIndex]);
-        // console.log(data[currentOrderDetailIndex][message.data.orderNo]);
-        /*
-                lock = false;
-                console.log('currentOrderDetailIndex -- ', currentOrderDetailIndex);
-                console.log(Object.keys(data).length);
-                console.log(currentOrderDetailIndex);
-                if (Object.keys(data).length < currentOrderDetailIndex) {
-                    console.log("wil fetch -- ", currentOrderDetailIndex);
-                    startDetailScrapping(currentOrderDetailIndex + 1);
-                } else {
-                    console.log('detail crawl is complete');
-                }
-        */
-
-        /*
-                chrome.tabs.remove(data[currentOrderDetailIndex][message.data.orderNo].tabid, function () {
-                    console.log('tab is closed');
-                    console.log(currentOrderDetailIndex);
-                    lock = false;
-        
-        
-                });*/
-
-
-        //update data here
-
         return false;
     } else if (message.command === 'crawling-content') {
         console.log('called');
         chrome.storage.local.get(['crawlerData'], function (result) {
+            page = result.crawlerData.currPage;
+            myitem = result.crawlerData.myitem;
+            itemsize = result.crawlerData.itemsize;
             sendResponse({ response: result.crawlerData.crawling });
         });
         return true;
@@ -379,6 +372,14 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 function postDatatoTheServer() {
 
     console.log('posting results to the server');
+    data = [];
+    chrome.storage.local.get(['crawlerData']. function (params) {
+        
+        for(let i = 1; i <= params.crawlerData.totalPages; i++){
+
+            console.log('test');
+        }
+    });
 
     //http://test.3stock.net/all.php', //
 
@@ -400,6 +401,13 @@ function postDatatoTheServer() {
             return response.json();
         }).then(json => {
             console.log(json);
+            crawling = false;
+            data = '';
+            lock = false;
+            crawled = false;
+            workingTab = '';
+            currentOrderDetailIndex = 0;
+            chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false, page:1, jobType : 1} });
             return json;
         })
 }
