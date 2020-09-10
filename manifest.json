@@ -25,7 +25,7 @@
       "matches": [
         "*://*.aliexpress.com/*"
       ],
-      "all_frames": true,
+      "all_frames": false,
       "css": [
         "app/scripts/content/css/style.css"
       ],
