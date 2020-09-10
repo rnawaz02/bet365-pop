@@ -300,35 +300,23 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
                         result.crawlerData.myitem = 1
                         result.crawlerData.currPage = page + 1
                         chrome.storage.local.set({ ['crawlerData']: result.crawlerData }, function (result4) {
-                            lock = false;
-                            setTimeout(startDetailScrapping, 3000);
-                        });
+
+                           // lock = false;
+                           // setTimeout(startDetailScrapping, 3000);
+
+                        chrome.runtime.sendMessage({ command: 'fetchNext-back', page: result.crawlerData.currPage });
                         /*
-                        if(page === 1){
-                            chrome.storage.local.set({ ['pageData'] : result2['data-' + page]}, function(){
-                                chrome.storage.local.remove(['data-' + page]);
-                                result.crawlerData.myitem = 1
-                                result.crawlerData.currPage = page + 1
-                                chrome.storage.local.set({ ['crawlerData']: result.crawlerData }, function (result4) {
-                                    lock = false;
-                                    setTimeout(startDetailScrapping, 3000);
-                                });
-                            })
-                        }else{
-                            chrome.storage.local.get(['pageData'], function(oldData){
-                                oldData.concat(result2['data-' + page]);
-                                chrome.storage.local.set({ ['pageData'] : oldData}, function(){
-                                    chrome.storage.local.remove(['data-' + page]);
-                                    result.crawlerData.myitem = 1
-                                    result.crawlerData.currPage = page + 1
-                                    chrome.storage.local.set({ ['crawlerData']: result.crawlerData }, function (result4) {
-                                        lock = false;
-                                        setTimeout(startDetailScrapping, 3000);
-                                    });
-                                })
-                            })
-                        }
+                        , function (response) {
+                            console.log(response);
+                            if (response.response === "success") {
+                                document.getElementById('message').style.display = "none";
+                                //document.getElementById('spacer').style.display="block";
+                            }
+                        })
                         */
+
+
+                        });
                     } else {
 
                         console.log("\n\n\n page items are crawled");
@@ -337,33 +325,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
                         console.log(page == 1);
 
                         postDatatoTheServer(result2['data-' + page]);    
-                        chrome.storage.local.remove(['data-' + page]);
-                         
-
-                        /*
-                        chrome.storage.local.get(['pageData'], function(oldData){
-                            console.log(oldData);
-                            if(page === 1){
-                                oldData = result2['data-' + page];
-                                console.log(oldData);
-                        
-                                oldData = [...oldData, ...result2['data-' + page]];
-                                console.log(oldData);
-                        
-                               // oldData.concat(result2['data-' + page]);
-                               // console.log(oldData);
-                        
-                            }else{
-                                oldData = [...oldData, ...result2['data-' + page]];
-                            }
-                          
-                            //oldData.concat(result2['data-' + page]);
-                            chrome.storage.local.set({ ['pageData'] : oldData}, function(){
-                                chrome.storage.local.remove(['data-' + page]);
-                                postDatatoTheServer();            
-                            });
-                        });
-                        */
+           //             chrome.storage.local.remove(['data-' + page]);
                         result.crawlerData.crawling = false
                         chrome.storage.local.set({ ['crawlerData']: result.crawlerData }, function (result4) {
                         });
@@ -409,40 +371,6 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         sendResponse({ response: "failure", message: "Unknown action" });
     }
 });
-/*
-async function fetchData(index, totalPages){
-    console.log(index);
-    console.log(totalPages);
-    chrome.storage.local.get(['data-' + index], function (newdata) {
-        console.log(newdata);
-        data.concat(newdata);
-        if(totalPages > index ){
-            fetchData(index + 1);
-        }
-    });
-}
-*/
-/*
-function postDatatoTheServer() {
-
-    console.log('posting results to the server');
-    //data = [];
-    chrome.storage.local.get(['pageData'], function (params) {
-
-        console.log(params);
-
-        //for(let i = 1; i <= params.crawlerData.totalPages; i++){
-
-        //console.log('test');
-       
-            postNow(params);
-
-       
-        //}
-    });
-
-}
-*/
 
 function postDatatoTheServer(pageData) {
 
@@ -469,6 +397,7 @@ function postDatatoTheServer(pageData) {
             return response.json();
         }).then(json => {
             console.log(json);
+            /*
             crawling = false;
             data = '';
             lock = false;
@@ -476,6 +405,7 @@ function postDatatoTheServer(pageData) {
             workingTab = '';
             currentOrderDetailIndex = 0;
             chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false, page: 1, jobType: 1 } });
+            */
             return json;
         })
 }

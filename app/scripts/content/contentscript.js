@@ -14,7 +14,7 @@ function startScrapFunc() {
 window.addEventListener("load", function () {
 
     chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-     if (message.command === 'testco-pop') {
+        if (message.command === 'testco-pop') {
             console.log(state);
             console.log(data);
             console.log(scrapped);
@@ -22,26 +22,25 @@ window.addEventListener("load", function () {
             return false;
         } else if (message.command === 'startScrapping-back') {
             console.log('startScrapping-back');
-            //checkifLoggedIn();
-            //if (state) {
-            //sendResponse({ response: true });
             startScrapFunc();
-            //} else {
-            //    sendResponse({ response: false });
-            //}
             return false;
-            // } else if (message.command === 'orderDetailsSendData-back') {
-            //    console.log('orderDetailsSendData-back');
-
-            //    chrome.runtime.sendMessage({ command: 'crawledOrderDetail-content', data: data, done: true });
+        } else if (message.command === 'fetchNext-back') {
+            console.log('fetchNext-back');
+            //startScrapFunc();
+            loadNextPage();
+            return false;
         } else {
             console.log('unkown operation');
-            console.log(data);
-            console.log(data.length);
             false;
         }
     });
-
+    checkifLoggedIn();
+    if (!state) {
+        console.log('not logged in');
+    } else {
+        console.log('logged in');
+        crawlPage();
+    }
     var observeDOM = (function () {
         var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
         return function (obj, callback) {
@@ -65,13 +64,6 @@ window.addEventListener("load", function () {
             crawlPage();
         }
     });
-    checkifLoggedIn();
-    if (!state) {
-        console.log('not logged in');
-    } else {
-        console.log('logged in');
-        crawlPage();
-    }
 });
 
 
@@ -91,7 +83,6 @@ function checkifLoggedIn() {
         let nameEle = flyoutLogined[0].getElementsByClassName('welcome-name');
         if (nameEle && (nameEle.length > 0)) {
             state = true;
-
         }
     }
     chrome.runtime.sendMessage({ command: 'setLoginState-content', state: state });
@@ -105,17 +96,17 @@ function crawlPage() {
                 if (!scrapped) {
                     aliOrderParser();
                     scrapped = true;
-                    console.log(data);
+                    //console.log(data);
                     console.log(paging);
                     chrome.runtime.sendMessage({ command: 'crawledOrder-complete-content', data: data, paging: paging }, function (response) {
-                        console.log(response);
-                        let pages = paging.split('/');
-                        console.log(pages);
-                        if(pages.length === 2){
-                            if(pages[0] !== pages[1]){
-                                loadNextPage();
-                            }
-                        }
+                        // console.log(response);
+                        // let pages = paging.split('/');
+                        // console.log(pages);
+                        // if(pages.length === 2){
+                        //     if(pages[0] !== pages[1]){
+                        //         loadNextPage();
+                        //    }
+                        //    }
                         //if(true){
                         //    loadNextPage();
                         //}
@@ -146,16 +137,18 @@ function crawlPage() {
         }
     }
 }
-function loadNextPage() {
+function loadNextPage(nextpage = 0) {
 
-    let simplePager = document.getElementById('simple-pager');
-    let uiPaginationNext = simplePager.getElementsByClassName('ui-pagination-next');
-    if (uiPaginationNext.length > 0) {
-        console.log(uiPaginationNext);
-        if (uiPaginationNext[0].classList.contains('ui-pagination-disabled')) {
-            consosle.log('orders crawled');
-        } else {
-            uiPaginationNext[0].click();
+    if (nextpage == 0) {
+        let simplePager = document.getElementById('simple-pager');
+        let uiPaginationNext = simplePager.getElementsByClassName('ui-pagination-next');
+        if (uiPaginationNext.length > 0) {
+            console.log(uiPaginationNext);
+            if (uiPaginationNext[0].classList.contains('ui-pagination-disabled')) {
+                consosle.log('orders crawled');
+            } else {
+                uiPaginationNext[0].click();
+            }
         }
     }
 }
