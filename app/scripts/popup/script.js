@@ -47,6 +47,7 @@ window.addEventListener("load", function () {
         */
     });
 
+
     document.getElementById('testcobutton').addEventListener('click', function (event) {
         chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
             var activeTab = tabs[0];

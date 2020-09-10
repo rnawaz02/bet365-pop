@@ -14,11 +14,7 @@ function startScrapFunc() {
 window.addEventListener("load", function () {
 
     chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
-
-        //console.log(message)
-        //console.log(sender)
-
-        if (message.command === 'testco-pop') {
+     if (message.command === 'testco-pop') {
             console.log(state);
             console.log(data);
             console.log(scrapped);

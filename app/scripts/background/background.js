@@ -40,19 +40,19 @@ function startDetailScrapping() {
                 console.log(result2['data-' + page]);
                 let keyList = Object.keys(result2['data-' + page]);
                 itemsize = keyList.length;
-               
+
 
 
                 console.log(keyList);
                 console.log(itemsize);
-                console.log(result2['data-' + page][keyList[myitem-1]]);
+                console.log(result2['data-' + page][keyList[myitem - 1]]);
 
-                orderNumber = Object.keys(result2['data-' + page][keyList[myitem-1]])[0];
+                orderNumber = Object.keys(result2['data-' + page][keyList[myitem - 1]])[0];
 
                 console.log(orderNumber);
 
                 console.log(myitem);
-                let dataCopy = result2['data-' + page][keyList[myitem-1]][orderNumber];
+                let dataCopy = result2['data-' + page][keyList[myitem - 1]][orderNumber];
 
                 if (dataCopy.status === "new") {
                     //let tabURL = dataCopy.detailURL
@@ -75,7 +75,7 @@ function startDetailScrapping() {
                 }
 
             });
-            
+
             //updateCrawlMeta(page, '', 2, item, itemsize, orderNumber)
 
         });
@@ -143,7 +143,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         crawled = false;
         workingTab = '';
         currentOrderDetailIndex = 0;
-        chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false, page:1, jobType : 1} });
+        chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false, page: 1, jobType: 1 } });
         sendResponse({ response: "success" });
     } else if (message.command === 'startScrapping-pop') {
         console.log('startScrapping-pop');
@@ -151,7 +151,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         chrome.storage.local.get(['crawlerData'], function (result) {
             console.log(result);
             if (Object.keys(result).length === 0 && result.constructor === Object) {
-                chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: true, jobType:1, page: 1 } });
+                chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: true, jobType: 1, page: 1 } });
             } else {
                 if (!result.crawlerData.crawling) {
                     chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: true } }, function (result) {
@@ -241,12 +241,12 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             updateCrawlMeta(pages[0], pages[1], 1);
             chrome.storage.local.set({ ['data-' + pages[0]]: message.data }, function (result) {
                 sendResponse({ response: true });
-                if (pages[0] === pages[1]) {            
+                if (pages[0] === pages[1]) {
                     chrome.storage.local.get(['crawlerData'], function (last) {
                         last.crawlerData.currPage = 1;
                         last.crawlerData.myitem = 1;
                         last.crawlerData.jobType = 2;
-                        chrome.storage.local.set({ 'crawlerData': last.crawlerData }, function(last2){
+                        chrome.storage.local.set({ 'crawlerData': last.crawlerData }, function (last2) {
                             //startDetailScrapping();
                             setTimeout(startDetailScrapping, 3000);
 
@@ -273,59 +273,100 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
                     console.log(result.crawlerData.workingTab, 'tab is closed');
                 });
             }
-
-
             chrome.storage.local.get(['data-' + page], function (result2) {
 
-                console.log(result2);
-
-                console.log(page);
-                console.log(myitem);
-                console.log(myitem-1);
-                console.log(result.crawlerData.myitem -1);
-                console.log(itemsize);
-                console.log(orderNumber);
-
-                console.log(result.crawlerData.myitem -1);
-                console.log(message.data.orderNo);
-             
-             
                 let dataCopy = result2['data-' + page][myitem - 1][message.data.orderNo];
-                console.log(dataCopy);
-
-              
-                //let dataCopy = result2[result.crawlerData.item][result.crawlerData.orderNumber];
-                //console.log(dataCopy);
                 dataCopy.internationalShippingCompany = message.data.internationalShippingCompany
                 dataCopy.trackingNumberRemarksDetails = message.data.trackingNumberRemarksDetails
                 dataCopy.address = message.data.address
                 dataCopy.status = "complete";
-                chrome.storage.local.set({ ['data-' + page] : result2['data-' + page] }, function(result3){
-                    console.log(result3);
+                chrome.storage.local.set({ ['data-' + page]: result2['data-' + page] }, function (result3) {
 
-                    if(myitem < itemsize) {
+                    if (myitem < itemsize) {
                         result.crawlerData.myitem = myitem + 1
-                        console.log(result);
-                        chrome.storage.local.set({['crawlerData'] : result.crawlerData}, function (result4) {
-                            console.log(result4);
+                        chrome.storage.local.set({ ['crawlerData']: result.crawlerData }, function (result4) {
                             lock = false;
                             setTimeout(startDetailScrapping, 3000);
                         });
-                    }else if(myitem === itemsize && page < result.crawlerData.totalPages){
+                    } else if (myitem === itemsize && page < result.crawlerData.totalPages) {
+
+                        console.log("\n\n\n page items are crawled");
+                        console.log(page)
+                        console.log(page === 1);
+                        console.log(page == 1);
+                        postDatatoTheServer(result2['data-' + page]);    
+                        chrome.storage.local.remove(['data-' + page]);
+
                         result.crawlerData.myitem = 1
                         result.crawlerData.currPage = page + 1
-                        chrome.storage.local.set({['crawlerData'] : result.crawlerData}, function (result4) {     
-                            console.log(result4);
+                        chrome.storage.local.set({ ['crawlerData']: result.crawlerData }, function (result4) {
                             lock = false;
                             setTimeout(startDetailScrapping, 3000);
                         });
-                    }else{
-                        console.log('end of job');
+                        /*
+                        if(page === 1){
+                            chrome.storage.local.set({ ['pageData'] : result2['data-' + page]}, function(){
+                                chrome.storage.local.remove(['data-' + page]);
+                                result.crawlerData.myitem = 1
+                                result.crawlerData.currPage = page + 1
+                                chrome.storage.local.set({ ['crawlerData']: result.crawlerData }, function (result4) {
+                                    lock = false;
+                                    setTimeout(startDetailScrapping, 3000);
+                                });
+                            })
+                        }else{
+                            chrome.storage.local.get(['pageData'], function(oldData){
+                                oldData.concat(result2['data-' + page]);
+                                chrome.storage.local.set({ ['pageData'] : oldData}, function(){
+                                    chrome.storage.local.remove(['data-' + page]);
+                                    result.crawlerData.myitem = 1
+                                    result.crawlerData.currPage = page + 1
+                                    chrome.storage.local.set({ ['crawlerData']: result.crawlerData }, function (result4) {
+                                        lock = false;
+                                        setTimeout(startDetailScrapping, 3000);
+                                    });
+                                })
+                            })
+                        }
+                        */
+                    } else {
+
+                        console.log("\n\n\n page items are crawled");
+                        console.log(page)
+                        console.log(page === 1);
+                        console.log(page == 1);
+
+                        postDatatoTheServer(result2['data-' + page]);    
+                        chrome.storage.local.remove(['data-' + page]);
+                         
+
+                        /*
+                        chrome.storage.local.get(['pageData'], function(oldData){
+                            console.log(oldData);
+                            if(page === 1){
+                                oldData = result2['data-' + page];
+                                console.log(oldData);
+                        
+                                oldData = [...oldData, ...result2['data-' + page]];
+                                console.log(oldData);
+                        
+                               // oldData.concat(result2['data-' + page]);
+                               // console.log(oldData);
+                        
+                            }else{
+                                oldData = [...oldData, ...result2['data-' + page]];
+                            }
+                          
+                            //oldData.concat(result2['data-' + page]);
+                            chrome.storage.local.set({ ['pageData'] : oldData}, function(){
+                                chrome.storage.local.remove(['data-' + page]);
+                                postDatatoTheServer();            
+                            });
+                        });
+                        */
                         result.crawlerData.crawling = false
-                        chrome.storage.local.set({['crawlerData'] : result.crawlerData}, function (result4) {
-                            console.log(result4);
-                            postDatatoTheServer();
-                        });               
+                        chrome.storage.local.set({ ['crawlerData']: result.crawlerData }, function (result4) {
+                        });
                     }
                 })
             });
@@ -368,18 +409,45 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         sendResponse({ response: "failure", message: "Unknown action" });
     }
 });
-
+/*
+async function fetchData(index, totalPages){
+    console.log(index);
+    console.log(totalPages);
+    chrome.storage.local.get(['data-' + index], function (newdata) {
+        console.log(newdata);
+        data.concat(newdata);
+        if(totalPages > index ){
+            fetchData(index + 1);
+        }
+    });
+}
+*/
+/*
 function postDatatoTheServer() {
 
     console.log('posting results to the server');
-    data = [];
-    chrome.storage.local.get(['crawlerData']. function (params) {
-        
-        for(let i = 1; i <= params.crawlerData.totalPages; i++){
+    //data = [];
+    chrome.storage.local.get(['pageData'], function (params) {
 
-            console.log('test');
-        }
+        console.log(params);
+
+        //for(let i = 1; i <= params.crawlerData.totalPages; i++){
+
+        //console.log('test');
+       
+            postNow(params);
+
+       
+        //}
     });
+
+}
+*/
+
+function postDatatoTheServer(pageData) {
+
+    console.log('postNow');
+    console.log(pageData);
 
     //http://test.3stock.net/all.php', //
 
@@ -395,7 +463,7 @@ function postDatatoTheServer() {
             redirect: 'follow', // manual, *follow, error
             referrer: 'no-referrer', // no-referrer, *client
             timeout: 5000,
-            body: JSON.stringify({ username: username, password: password, data: data })
+            body: JSON.stringify({ username: username, password: password, data: pageData })
         }).then(response => {
             console.log(response);
             return response.json();
@@ -407,7 +475,7 @@ function postDatatoTheServer() {
             crawled = false;
             workingTab = '';
             currentOrderDetailIndex = 0;
-            chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false, page:1, jobType : 1} });
+            chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false, page: 1, jobType: 1 } });
             return json;
         })
 }
