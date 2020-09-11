@@ -4,14 +4,10 @@ window.addEventListener("load", function () {
     console.log('loaded');
 
     document.getElementById('startbutton').addEventListener('click', function (event) {
-
-        console.log(event);
-
         chrome.runtime.sendMessage({
-            command: 'startScrapping-pop', function(response) {
+            command: 'start-pop', function(response) {
                 console.log(response);
                 if (response.response === "success") {
-                    //document.getElementById('spacer').style.display="none";
                     document.getElementById('message').innerText = response.message;
                     document.getElementById('message').style.color = "red";
                     document.getElementById('message').style.display = "block";
@@ -19,13 +15,23 @@ window.addEventListener("load", function () {
             }
         });
     });
-
+    document.getElementById('stopbutton').addEventListener('click', function (event) {
+        chrome.runtime.sendMessage({ command: 'stop-pop' }, function (response) {
+            console.log(response);
+            if (response.response === "success") {
+                document.getElementById('message').innerText = response.message;
+                document.getElementById('message').style.color = "red";
+                document.getElementById('message').style.display = "block";
+            }
+        })
+    });
     document.getElementById('resetbutton').addEventListener('click', function (event) {
         chrome.runtime.sendMessage({ command: 'reset-pop' }, function (response) {
             console.log(response);
             if (response.response === "success") {
-                document.getElementById('message').style.display = "none";
-                //document.getElementById('spacer').style.display="block";
+                document.getElementById('message').innerText = response.message;
+                document.getElementById('message').style.color = "red";
+                document.getElementById('message').style.display = "block";
             }
         })
     });

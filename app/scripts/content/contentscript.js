@@ -4,7 +4,7 @@ var data = [];
 var scrapped = false;
 var checked = false;
 var paging;
-function startScrapFunc() {
+function startScrapFunc(data) {
     let orderList = document.createElement('a');
     orderList.setAttribute("id", "aliexpressdatagrabberorderlist");
     orderList.setAttribute("href", "//trade.aliexpress.com/orderList.htm");
@@ -22,6 +22,7 @@ window.addEventListener("load", function () {
             return false;
         } else if (message.command === 'startScrapping-back') {
             console.log('startScrapping-back');
+            //console.log(message.data);
             startScrapFunc();
             return false;
         } else if (message.command === 'fetchNext-back') {
@@ -88,54 +89,59 @@ function checkifLoggedIn() {
     chrome.runtime.sendMessage({ command: 'setLoginState-content', state: state });
 }
 function crawlPage() {
-    if (window.location.href.includes('orderList.htm')) {
-        console.log('parse orders');
-        chrome.runtime.sendMessage({ command: 'crawling-content' }, function (response) {
-            if (response.response) {
-                console.log('crawling product page');
+
+    chrome.runtime.sendMessage({ command: 'crawling-content' }, function (response) {
+        if (response.response) {
+            console.log('crawling');
+            console.log(response.data);
+            //check if on correct page.
+            //otherwise browse to correct page
+            if (window.location.href.includes('orderList.htm')) {
+                console.log('parse orders');
+                        if (!scrapped) {
+                            aliOrderParser();
+                            scrapped = true;
+                            //console.log(data);
+                            //console.log(paging);
+                            chrome.runtime.sendMessage({ command: 'crawledOrder-complete-content', data: data, paging: paging });
+                            //, function (response) {
+                                // console.log(response);
+                                // let pages = paging.split('/');
+                                // console.log(pages);
+                                // if(pages.length === 2){
+                                //     if(pages[0] !== pages[1]){
+                                //         loadNextPage();
+                                //    }
+                                //    }
+                                //if(true){
+                                //    loadNextPage();
+                                //}
+                            //});
+                        }
+            } else if (window.location.href.includes('order_detail.htm')) {
+                console.log('parse order detail');
                 if (!scrapped) {
-                    aliOrderParser();
-                    scrapped = true;
-                    //console.log(data);
-                    console.log(paging);
-                    chrome.runtime.sendMessage({ command: 'crawledOrder-complete-content', data: data, paging: paging }, function (response) {
-                        // console.log(response);
-                        // let pages = paging.split('/');
-                        // console.log(pages);
-                        // if(pages.length === 2){
-                        //     if(pages[0] !== pages[1]){
-                        //         loadNextPage();
-                        //    }
-                        //    }
-                        //if(true){
-                        //    loadNextPage();
-                        //}
+                    if (aliOrderDetailParser()) {
+                        scrapped = true;
+                        chrome.runtime.sendMessage({ command: 'crawledOrderDetail-complete-content', data: data });
+                    } else {
+                        scrapped = false;
+                    }
+                }
+            } else if (window.location.href.includes('aliexpress')) {
+                if (!checked) {
+                    checked = true;
+                    chrome.runtime.sendMessage({ command: 'crawling-content' }, function (response) {
+                        if (response.response) {
+                            startScrapFunc();
+                        }
                     });
                 }
-            } else {
-                console.log('not crawling');
             }
-        });
-    } else if (window.location.href.includes('order_detail.htm')) {
-        console.log('parse order detail');
-        if (!scrapped) {
-            if (aliOrderDetailParser()) {
-                scrapped = true;
-                chrome.runtime.sendMessage({ command: 'crawledOrderDetail-complete-content', data: data });
-            } else {
-                scrapped = false;
-            }
+        } else {
+            console.log('not crawling');
         }
-    } else if (window.location.href.includes('aliexpress')) {
-        if (!checked) {
-            checked = true;
-            chrome.runtime.sendMessage({ command: 'crawling-content' }, function (response) {
-                if (response.response) {
-                    startScrapFunc();
-                }
-            });
-        }
-    }
+    });
 }
 function loadNextPage(nextpage = 0) {
 

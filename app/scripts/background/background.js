@@ -82,23 +82,6 @@ function startDetailScrapping() {
     }
 }
 
-chrome.storage.local.get(['crawlerData'], function (result) {
-    console.log(result);
-    if (Object.keys(result).length === 0 && result.constructor === Object) {
-        console.log('no result found initialize');
-        chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false, page: 1, myitem: 1 } }, function () {
-            console.log("added default values to the storage")
-        });
-    } else {
-        console.log('found result!');
-        console.log(result);
-        state = result.state
-        currentOrderDetailIndex = result.currentOrderDetailIndex
-        workingTab = workingTab
-        crawling = crawling
-    }
-});
-
 function updateCrawlMeta(currPage, totalPages, jobType, myitem, itemsize, orderNumber, workingTab) {
     //         updateCrawlMeta(page, '', 2, item, itemsize, orderNumber, tab.id)
 
@@ -135,6 +118,15 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         console.log('savebc-pop');
         postDatatoTheServer();
         return false;
+    } else if (message.command === 'stop-pop') {
+        chrome.storage.local.get(['crawlerData'], function (result) {
+            console.log(result);
+            result.crawlerData.crawling = false;
+            chrome.storage.local.set({ 'crawlerData': result.crawlerData }, function (result) {
+                sendResponse({ response: "success", message: "Crawler is stopped." });
+            })
+        })
+        return true;
     } else if (message.command === 'reset-pop') {
         console.log('reset-pop');
         crawling = false;
@@ -142,53 +134,54 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         lock = false;
         crawled = false;
         workingTab = '';
+        myitem = 1;
         currentOrderDetailIndex = 0;
-        chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false, page: 1, jobType: 1 } });
-        sendResponse({ response: "success" });
-    } else if (message.command === 'startScrapping-pop') {
-        console.log('startScrapping-pop');
-        crawled = false;
         chrome.storage.local.get(['crawlerData'], function (result) {
             console.log(result);
+            result.crawlerData.crawling = false;
+            result.crawlerData.currPage = 1;
+            result.crawlerData.jobType = 1;
+            result.crawlerData.myitem = 1;
+            chrome.storage.local.set({ 'crawlerData': result.crawlerData }, function (result) {
+                sendResponse({ response: "success", message: "Crawler is reset." });
+            })
+        })
+        return true;
+        //chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false, page: 1, jobType: 1 } });
+        //sendResponse({ response: "success" });
+    } else if (message.command === 'start-pop') {
+        console.log('start-pop');
+        crawled = false;
+        chrome.storage.local.get(['crawlerData'], function (result) {
+            console.log(result.crawlerData);
             if (Object.keys(result).length === 0 && result.constructor === Object) {
-                chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: true, jobType: 1, page: 1 } });
+                console.log('crawler data is not set');
+                let crawlerData = { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: true, jobType: 1, currPage: 1 };
+                chrome.storage.local.set({ 'crawlerData': crawlerData });
+                chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+                    var activeTab = tabs[0];
+                    chrome.tabs.sendMessage(activeTab.id, { command: 'startScrapping-back', data: crawlerData });
+                    chrome.runtime.sendMessage({ command: 'startScrappingResp-back', response: "success", message: "Scrapper is started" });
+                });
             } else {
                 if (!result.crawlerData.crawling) {
-                    chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: true } }, function (result) {
-                        chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-                            var activeTab = tabs[0];
-                            chrome.tabs.sendMessage(activeTab.id, { command: 'startScrapping-back' }); //, function (response) {
-                            /*
-                            console.log(response);
-                            if (response.response) {
-                                state = true;
-                                chrome.runtime.sendMessage({ command: 'startScrappingResp-back', response: "success", message: "Scrapper is started" });
-                            } else {
-                                state = false;
-                                crawling = false;
-                                chrome.runtime.sendMessage({ command: 'startScrappingResp-back', response: "failed", message: "Scrapper is not started. Make sure that you are logged in." });
-                            }
-                            return false;
-                            */
-                            //});
+                    result.crawlerData.crawling = true;
+                    if (result.crawlerData.jobType == 2) {
+                        startDetailScrapping();
+                    } else {
+                        chrome.storage.local.set({ 'crawlerData': result.crawlerData }, function (result2) {
+                            chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+                                var activeTab = tabs[0];
+                                chrome.tabs.sendMessage(activeTab.id, { command: 'startScrapping-back', dara: result.crawlerData });
+                            });
                         });
-                        chrome.runtime.sendMessage({ command: 'startScrappingResp-back', response: "success", message: "Scrapper is started" });
-                    });
+                    }
+                    chrome.runtime.sendMessage({ command: 'startScrappingResp-back', response: "success", message: "Scrapper is started" });
                 } else {
                     chrome.runtime.sendMessage({ command: 'startScrappingResp-back', response: "failed", message: "Scrapper is already running" });
                 }
             }
         });
-
-
-        // console.log('startScrapping-pop');
-        // console.log(crawling);
-
-        /*
-         */
-        //   return false;
-        // }
-
         return false;
     } else if (message.command === 'scrapOrderDetail-pop') {
         console.log('scrapOrderDetail-pop');
@@ -294,26 +287,27 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
                         console.log(page)
                         console.log(page === 1);
                         console.log(page == 1);
-                        postDatatoTheServer(result2['data-' + page]);    
-                        chrome.storage.local.remove(['data-' + page]);
+                        postDatatoTheServer(result2['data-' + page]);
+                       
+                       // chrome.storage.local.remove(['data-' + page]);
 
                         result.crawlerData.myitem = 1
                         result.crawlerData.currPage = page + 1
                         chrome.storage.local.set({ ['crawlerData']: result.crawlerData }, function (result4) {
 
-                           // lock = false;
-                           // setTimeout(startDetailScrapping, 3000);
+                            // lock = false;
+                            // setTimeout(startDetailScrapping, 3000);
 
-                        chrome.runtime.sendMessage({ command: 'fetchNext-back', page: result.crawlerData.currPage });
-                        /*
-                        , function (response) {
-                            console.log(response);
-                            if (response.response === "success") {
-                                document.getElementById('message').style.display = "none";
-                                //document.getElementById('spacer').style.display="block";
-                            }
-                        })
-                        */
+                            chrome.runtime.sendMessage({ command: 'fetchNext-back', page: result.crawlerData.currPage });
+                            /*
+                            , function (response) {
+                                console.log(response);
+                                if (response.response === "success") {
+                                    document.getElementById('message').style.display = "none";
+                                    //document.getElementById('spacer').style.display="block";
+                                }
+                            })
+                            */
 
 
                         });
@@ -324,9 +318,12 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
                         console.log(page === 1);
                         console.log(page == 1);
 
-                        postDatatoTheServer(result2['data-' + page]);    
-           //             chrome.storage.local.remove(['data-' + page]);
+                        postDatatoTheServer(result2['data-' + page]);
+                        //             chrome.storage.local.remove(['data-' + page]);
                         result.crawlerData.crawling = false
+                        result.crawlerData.currPage = 1
+                        result.crawlerData.myitem = 1
+                        result.crawlerData.jobType = 1;
                         chrome.storage.local.set({ ['crawlerData']: result.crawlerData }, function (result4) {
                         });
                     }
@@ -340,7 +337,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             page = result.crawlerData.currPage;
             myitem = result.crawlerData.myitem;
             itemsize = result.crawlerData.itemsize;
-            sendResponse({ response: result.crawlerData.crawling });
+            sendResponse({ response: result.crawlerData.crawling, data: result.crawlerData });
         });
         return true;
     } else if (message.command === 'crawlingDetails-content') {
@@ -410,7 +407,24 @@ function postDatatoTheServer(pageData) {
         })
 }
 
-chrome.runtime.onStartup.addListener(function () {
+chrome.runtime.onInstalled.addListener(function () {
     //chrome.storage.local.clear();
     console.log('Chrome extension is started');
+    chrome.storage.local.get(['crawlerData'], function (result) {
+        console.log(result);
+        if (Object.keys(result).length === 0 && result.constructor === Object) {
+            console.log('no result found initialize');
+            chrome.storage.local.set({ 'crawlerData': { state: false, currentOrderDetailIndex: 0, workingTab: '', crawling: false, currPage: 1, myitem: 1, jobType: 1 } }, function () {
+                console.log("added default values to the storage")
+            });
+        } else {
+            console.log('found result!');
+            console.log(result);
+            state = result.state
+            page = result.currPage
+            currentOrderDetailIndex = result.currentOrderDetailIndex
+            workingTab = workingTab
+            crawling = crawling
+        }
+    });    
 })
