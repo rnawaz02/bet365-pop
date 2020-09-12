@@ -3,6 +3,22 @@
 window.addEventListener("load", function () {
     console.log('loaded');
 
+    chrome.runtime.sendMessage({ command: 'meta-pop' }, function (response) {
+        if (response.crawlerData.crawling) {
+            document.getElementById('message').innerText = 'Crawler is running.';
+            document.getElementById('message').style.color = "red";
+            document.getElementById('message').style.display = "block";
+            document.getElementById('restartbutton').disabled = false;
+            document.getElementById('startbutton').disabled = true;
+        } else {
+            document.getElementById('restartbutton').disabled = true;
+            document.getElementById('startbutton').disabled = false;
+        }
+
+        console.log(response);
+    });
+
+
     document.getElementById('startbutton').addEventListener('click', function (event) {
         chrome.runtime.sendMessage({
             command: 'start-pop', function(response) {
@@ -11,7 +27,24 @@ window.addEventListener("load", function () {
                     document.getElementById('message').innerText = response.message;
                     document.getElementById('message').style.color = "red";
                     document.getElementById('message').style.display = "block";
+
+                    document.getElementById('restartbutton').disabled = false;
+                    document.getElementById('startbutton').disabled = true;
+           
                 }
+            }
+        });
+    });
+    document.getElementById('restartbutton').addEventListener('click', function (event) {
+        console.log(event);
+        chrome.runtime.sendMessage({
+            command: 'restart-pop'
+        }, function (response) {
+            console.log(response);
+            if (response.response === "success") {
+                document.getElementById('message').innerText = response.message;
+                document.getElementById('message').style.color = "red";
+                document.getElementById('message').style.display = "block";
             }
         });
     });
@@ -22,6 +55,9 @@ window.addEventListener("load", function () {
                 document.getElementById('message').innerText = response.message;
                 document.getElementById('message').style.color = "red";
                 document.getElementById('message').style.display = "block";
+                document.getElementById('restartbutton').disabled = true;
+                document.getElementById('startbutton').disabled = false;
+       
             }
         })
     });
@@ -32,40 +68,37 @@ window.addEventListener("load", function () {
                 document.getElementById('message').innerText = response.message;
                 document.getElementById('message').style.color = "red";
                 document.getElementById('message').style.display = "block";
+
+                document.getElementById('restartbutton').disabled = true;
+                document.getElementById('startbutton').disabled = false;    
             }
         })
     });
 
-
-    document.getElementById('testbcbutton').addEventListener('click', function (event) {
-        chrome.runtime.sendMessage({ command: 'testbc-pop' });
-    });
-
-    document.getElementById('detailcobutton').addEventListener('click', function (event) {
-        console.log('clicked detailcobutton');
-        chrome.runtime.sendMessage({ command: 'scrapOrderDetail-pop' });
+    /*
+        document.getElementById('testbcbutton').addEventListener('click', function (event) {
+            chrome.runtime.sendMessage({ command: 'testbc-pop' });
+        });
     
-        /*
-        chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-            var activeTab = tabs[0];
-            chrome.tabs.sendMessage(activeTab.id, { command: 'scrapOrderDetail-pop' });
+        document.getElementById('detailcobutton').addEventListener('click', function (event) {
+            console.log('clicked detailcobutton');
+            chrome.runtime.sendMessage({ command: 'scrapOrderDetail-pop' });
+        
+           });
+    
+    
+        document.getElementById('testcobutton').addEventListener('click', function (event) {
+            chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+                var activeTab = tabs[0];
+                chrome.tabs.sendMessage(activeTab.id, { command: 'testco-pop' });
+            });
         });
-        */
-    });
-
-
-    document.getElementById('testcobutton').addEventListener('click', function (event) {
-        chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
-            var activeTab = tabs[0];
-            chrome.tabs.sendMessage(activeTab.id, { command: 'testco-pop' });
+    
+        document.getElementById('savebcbutton').addEventListener('click', function (event) {
+            console.log('savebcbutton');
+            chrome.runtime.sendMessage({ command: 'savebc-pop' });
         });
-    });
-
-    document.getElementById('savebcbutton').addEventListener('click', function (event) {
-        console.log('savebcbutton');
-        chrome.runtime.sendMessage({ command: 'savebc-pop' });
-    });
-
+    */
 
     chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
@@ -90,6 +123,10 @@ window.addEventListener("load", function () {
                 document.getElementById('message').innerText = message.message;
                 document.getElementById('message').style.color = "green";
                 document.getElementById('message').style.display = "block";
+
+                document.getElementById('restartbutton').disabled = false;
+                document.getElementById('startbutton').disabled = true;
+       
             } else {
                 document.getElementById('message').innerText = message.message;
                 document.getElementById('message').style.color = "red";

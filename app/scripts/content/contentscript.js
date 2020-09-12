@@ -39,6 +39,10 @@ window.addEventListener("load", function () {
                 return false;
     
                 */
+        } else if (message.command === 'restartScrapping-back') {
+            console.log('sretartScrapping-back');
+            setTimeout(loadBackPage, 1000);
+            return false;
         } else if (message.command === 'startScrapping-next-back') {
 
             console.log('startScrapping-next-back');
@@ -115,7 +119,7 @@ function crawlPage() {
         if (uiPaginationNext.length > 0) {
             console.log(uiPaginationNext);
             if (! uiPaginationNext[0].classList.contains('ui-pagination-disabled')) {
-                pl = uiPaginationNext[0];
+                pl = uiPaginationNext[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, "");
                 console.log('next found');
             }
         }
@@ -184,6 +188,20 @@ function crawlPage() {
             console.log('not crawling');
         }
     });
+}
+
+function loadBackPage(){
+    console.log('loadBackPage');
+    let simplePager = document.getElementById('simple-pager');
+    let uiPaginationPrev = simplePager.getElementsByClassName('ui-pagination-pred');
+    if (uiPaginationPrev.length > 0) {
+        console.log(uiPaginationPrev);
+        if (uiPaginationPrev[0].classList.contains('ui-pagination-disabled')) {
+            startScrapFunc();
+        } else {
+            uiPaginationPrev[0].click();
+        }
+    }
 }
 
 function loadNextPage(nextpage = 1) {

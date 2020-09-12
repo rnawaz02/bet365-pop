@@ -66,26 +66,7 @@ function startDetailScrapping() {
         });
     }
 }
-/*
-function updateCrawlMeta(currPage, totalPages, jobType, myitem, itemsize, orderNumber, workingTab) {
-    //         updateCrawlMeta(page, '', 2, item, itemsize, orderNumber, tab.id)
 
-    chrome.storage.local.get(['crawlerData'], function (result) {
-        if (currPage) result.crawlerData.currPage = currPage
-        if (totalPages) result.crawlerData.totalPages = totalPages;
-        if (jobType) result.crawlerData.jobType = jobType;
-
-        if (myitem) result.crawlerData.myitem = myitem;
-        if (itemsize) result.crawlerData.itemsize = itemsize;
-        if (orderNumber) result.crawlerData.orderNumber = orderNumber;
-        if (workingTab) { result.crawlerData.workingTab = workingTab } else { result.crawlerData.workingTab = '' };
-
-        console.log(result);
-
-        chrome.storage.local.set({ 'crawlerData': result.crawlerData });
-    });
-}
-*/
 chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 
     if (message.command === 'testbc-pop') {
@@ -100,6 +81,24 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
             console.log(result);
         });
         return false;
+    } else if (message.command === 'meta-pop') {
+        console.log('meta-pop');
+        chrome.storage.local.get(['crawlerData'], function (result) {
+            sendResponse({'crawlerData': result.crawlerData});
+        });
+        return true
+    } else if (message.command === 'restart-pop') {
+        console.log('restart-pop');
+        chrome.storage.local.get(['crawlerData'], function (result) {
+            chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
+                var activeTab = tabs[0];
+                chrome.tabs.sendMessage(activeTab.id, { command: 'restartScrapping-back', page: result.crawlerData.currPage });
+                result.crawlerData.contentTab = activeTab.id;
+                chrome.storage.local.set({ 'crawlerData': result.crawlerData });
+                sendResponse({ response: "success", message: "Crawler is restarted." });
+            });
+        }); 
+        return true
     } else if (message.command === 'savebc-pop') {
         console.log('savebc-pop');
         postDatatoTheServer();
@@ -165,9 +164,9 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
                         });
                     });
                     //}
-                    chrome.runtime.sendMessage({ command: 'startScrappingResp-back', response: "success", message: "Scrapper is started" });
+                    chrome.runtime.sendMessage({ command: 'startScrappingResp-back', response: "success", message: "Crawler is started" });
                 } else {
-                    chrome.runtime.sendMessage({ command: 'startScrappingResp-back', response: "failed", message: "Scrapper is already running" });
+                    chrome.runtime.sendMessage({ command: 'startScrappingResp-back', response: "failed", message: "Crawler is already running" });
                 }
             }
         });
@@ -328,6 +327,7 @@ chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
         return false;
     } else if (message.command === 'crawling-content') {
         console.log('called');
+        crawled = false;
         chrome.storage.local.get(['crawlerData'], function (result) {
             page = result.crawlerData.currPage;
             myitem = result.crawlerData.myitem;
@@ -409,13 +409,17 @@ function postDatatoTheServer(pageData) {
                     console.log('got result ', result4);
                     console.log('making request ->  startScrapping-next-back');
                     //chrome.runtime.sendMessage({ command: 'startScrapping-next-back', page: result4.crawlerData.currPage });
+                   
+                    /*
                     chrome.tabs.query({ currentWindow: true, active: true }, function (tabs) {
                         console.log(tabs);
                         var activeTab = tabs[0];
                         console.log('activeTab ->', activeTab);
                         chrome.tabs.sendMessage(activeTab.id, { command: 'startScrapping-next-back', page: result.crawlerData.currPage });
                     });
-                    
+                    */
+                   chrome.tabs.sendMessage(result.crawlerData.contentTab, { command: 'startScrapping-next-back', page: result.crawlerData.currPage });
+                
                 });
                 return json;
             })
