@@ -3,12 +3,14 @@ var state = false;
 var data = [];
 var scrapped = false;
 var checked = false;
+var pag2;
 var paging;
 function startScrapFunc(data) {
     let orderList = document.createElement('a');
     orderList.setAttribute("id", "aliexpressdatagrabberorderlist");
     orderList.setAttribute("href", "//trade.aliexpress.com/orderList.htm");
     document.body.appendChild(orderList);
+    console.log('loading orderlist from startScrapFunc');
     orderList.click();
 }
 window.addEventListener("load", function () {
@@ -23,12 +25,26 @@ window.addEventListener("load", function () {
         } else if (message.command === 'startScrapping-back') {
             console.log('startScrapping-back');
             //console.log(message.data);
+            //page = message.data.currPage;
+            //if(message.page === 1){
             startScrapFunc();
+            //}result.crawlerDataelse{
+
+            //} 
             return false;
-        } else if (message.command === 'fetchNext-back') {
-            console.log('fetchNext-back');
-            //startScrapFunc();
-            loadNextPage();
+            /*} else if (message.command === 'fetchNext-back') {
+                console.log('fetchNext-back');
+                //startScrapFunc();
+                loadNextPage();
+                return false;
+    
+                */
+        } else if (message.command === 'startScrapping-next-back') {
+
+            console.log('startScrapping-next-back');
+            //loadNextPage();
+            setTimeout(loadNextPage, 6000);
+
             return false;
         } else {
             console.log('unkown operation');
@@ -42,6 +58,7 @@ window.addEventListener("load", function () {
         console.log('logged in');
         crawlPage();
     }
+    /*
     var observeDOM = (function () {
         var MutationObserver = window.MutationObserver || window.WebKitMutationObserver;
         return function (obj, callback) {
@@ -65,6 +82,7 @@ window.addEventListener("load", function () {
             crawlPage();
         }
     });
+    */
 });
 
 
@@ -90,34 +108,58 @@ function checkifLoggedIn() {
 }
 function crawlPage() {
 
+    let pl = '';
+    let simplePager = document.getElementById('simple-pager');
+    if(simplePager){
+        let uiPaginationNext = simplePager.getElementsByClassName('ui-pagination-next');
+        if (uiPaginationNext.length > 0) {
+            console.log(uiPaginationNext);
+            if (! uiPaginationNext[0].classList.contains('ui-pagination-disabled')) {
+                pl = uiPaginationNext[0];
+                console.log('next found');
+            }
+        }
+    }
+    console.log('uiPaginationNext - ', pl);
     chrome.runtime.sendMessage({ command: 'crawling-content' }, function (response) {
         if (response.response) {
             console.log('crawling');
-            console.log(response.data);
-            //check if on correct page.
-            //otherwise browse to correct page
+                 
             if (window.location.href.includes('orderList.htm')) {
                 console.log('parse orders');
-                        if (!scrapped) {
-                            aliOrderParser();
-                            scrapped = true;
-                            //console.log(data);
-                            //console.log(paging);
-                            chrome.runtime.sendMessage({ command: 'crawledOrder-complete-content', data: data, paging: paging });
-                            //, function (response) {
-                                // console.log(response);
-                                // let pages = paging.split('/');
-                                // console.log(pages);
-                                // if(pages.length === 2){
-                                //     if(pages[0] !== pages[1]){
-                                //         loadNextPage();
-                                //    }
-                                //    }
-                                //if(true){
-                                //    loadNextPage();
-                                //}
-                            //});
-                        }
+                console.log(response.data.pl)
+                var doc = new DOMParser().parseFromString(response.data.pl, "text/xml");
+                console.log(doc)
+                p = parseInt(simplePager.getElementsByClassName('ui-label')[0].innerHTML.split("/")[0], 10);
+                console.log(p);
+                console.log(response.data.currPage);
+             
+               // document.body.appendChild(doc);
+               // doc.click();
+
+                //let simplePager = document.getElementById('simple-pager');
+                if (p < response.data.currPage) {
+                    //loadNextPage();
+                    console.log('call next');
+                    setTimeout(loadNextPage, 3000);
+                
+                } else if (p > response.data.currPage) {
+                    //startScrapFunc();
+                    console.log('call first');
+                    setTimeout(startScrapFunc, 3000);
+                
+                } else {
+                    console.log('scrapped ', scrapped);
+                    if (!scrapped) {
+                        aliOrderParser();
+                        scrapped = true;
+                //        console.log(data);
+                //        console.log(paging);
+                        chrome.runtime.sendMessage({ command: 'crawledOrder-complete-content', data: data, paging: paging, pl: pl }, function(reply){
+                            console.log(reply);
+                        });
+                    } 
+                }
             } else if (window.location.href.includes('order_detail.htm')) {
                 console.log('parse order detail');
                 if (!scrapped) {
@@ -129,40 +171,45 @@ function crawlPage() {
                     }
                 }
             } else if (window.location.href.includes('aliexpress')) {
-                if (!checked) {
-                    checked = true;
-                    chrome.runtime.sendMessage({ command: 'crawling-content' }, function (response) {
-                        if (response.response) {
-                            startScrapFunc();
-                        }
-                    });
-                }
+                //if (!checked) {
+                 //   checked = true;
+                   // chrome.runtime.sendMessage({ command: 'crawling-content' }, function (response) {
+                       // if (response.response) {
+                startScrapFunc();
+                        //}
+                    //});
+             //   }
             }
         } else {
             console.log('not crawling');
         }
     });
 }
-function loadNextPage(nextpage = 0) {
 
-    if (nextpage == 0) {
-        let simplePager = document.getElementById('simple-pager');
-        let uiPaginationNext = simplePager.getElementsByClassName('ui-pagination-next');
-        if (uiPaginationNext.length > 0) {
-            console.log(uiPaginationNext);
-            if (uiPaginationNext[0].classList.contains('ui-pagination-disabled')) {
-                consosle.log('orders crawled');
-            } else {
-                uiPaginationNext[0].click();
-            }
+function loadNextPage(nextpage = 1) {
+
+    console.log('loadNextPage is called');
+    data = [];
+    scrapped = false;
+
+    let simplePager = document.getElementById('simple-pager');
+    let uiPaginationNext = simplePager.getElementsByClassName('ui-pagination-next');
+    if (uiPaginationNext.length > 0) {
+        console.log(uiPaginationNext);
+        if (uiPaginationNext[0].classList.contains('ui-pagination-disabled')) {
+            consosle.log('orders crawled');
+        } else {
+            uiPaginationNext[0].click();
         }
     }
+    //}
 }
+
 function aliOrderParser() {
 
     let ordersOnThePage = document.getElementById('buyer-ordertable').getElementsByClassName('order-item-wraper');
     for (let i = 0; i < ordersOnThePage.length; i++) {
-        console.log(ordersOnThePage[i]);
+        //console.log(ordersOnThePage[i]);
         let orderInfo = ordersOnThePage[i].getElementsByClassName('order-info');
         let storeInfo = ordersOnThePage[i].getElementsByClassName('store-info');
         let orderAmount = ordersOnThePage[i].getElementsByClassName('order-amount');
@@ -184,7 +231,20 @@ function aliOrderParser() {
             }
         }
         let detailURL = orderInfo[0].getElementsByClassName('first-row')[0].getElementsByTagName("a")[0].href;
+
+        let orderAction = orderBody[0].getElementsByClassName('order-action')[0].getElementsByTagName('button');
+        if(orderAction.length>1){
+            orderAction = orderAction[1].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, "");
+        }else{
+            orderAction = '';
+        }
+/////
+let itemNumber = ordersOnThePage[i].getElementsByClassName('product-title')[0].getElementsByTagName('a');
+itemNumber = itemNumber[0].href;
+
+///
         let orderItem = {
+            itemNumber: itemNumber,
             orderNumber: orderInfo[0].getElementsByClassName('first-row')[0].getElementsByClassName('info-body')[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
             orderTime: orderInfo[0].getElementsByClassName('second-row')[0].getElementsByClassName('info-body')[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
             storeName: storeInfo[0].getElementsByClassName('first-row')[0].getElementsByClassName('info-body')[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
@@ -193,7 +253,7 @@ function aliOrderParser() {
             quantity: orderamountandcount[1].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
             properties: properties.replace(/(\r\n|\n|\r)/gm, ""),
             orderStatus: orderBody[0].getElementsByClassName('order-status')[0].getElementsByClassName('f-left')[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
-            orderAction: orderBody[0].getElementsByClassName('order-action')[0].getElementsByTagName('button')[1].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, ""),
+            orderAction: orderAction,
             internationalShippingCompany: '',
             trackingNumberRemarksDetails: '',
             address: '',
@@ -202,11 +262,10 @@ function aliOrderParser() {
         }
         let simplePager = document.getElementById('simple-pager');
         paging = simplePager.getElementsByClassName('ui-label')[0].innerHTML;
-        console.log(orderItem);
+        //console.log(orderItem);
         data.push({ [orderItem.orderNumber]: orderItem });
     }
 }
-
 
 function aliOrderDetailParser() {
 
@@ -241,7 +300,7 @@ function aliOrderDetailParser() {
         trackingNumberRemarksDetails: trackingNumberRemarksDetails,
         address: userShippingList[1].getElementsByTagName('span')[0].innerHTML.trim().replace(/(\r\n|\n|\r)/gm, "")
     }
-    data = data;
-    console.log(data);
+    //data = data;
+    //console.log(data);
     return data;
 }
